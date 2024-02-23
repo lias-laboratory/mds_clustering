@@ -1,0 +1,32 @@
+compile:
+
+gcc -O3 main-emos-mds.c -o emos-mds -DREP
+
+usage:
+
+./emos-mds instance 
+
+
+The instance is a file in DIMACS graph format. 
+
+for example:
+
+./emos-mds bio-celegans
+
+
+output:
+
+# searching on instance bio-celegans ...
+R reading file in format of <e n1 n2> with |V|=453 |E|=2025
+R finished: #node=453 #edge=2025 #density=0.01977964 #time_for_reading=0.01s 
+R reduced: #nb_fixed 14 remaining 301  #time_for_reduction 0.00s 
+Problem 1 size 14/301 
+I #init_upper_bound 30  #time_for_init 0.01s
+--------------------------------
+#size       #tree       #time(s)
+--------------------------------
+ 29            19          0.01
+--------------------------------
+Solution: 123 153 185 186 227 229 232 239 352 372 379 390 426 427 408 6 231 155 145 233 182 89 355 348 134 192 301 272 437 
+>>> bio-celegans |V| 453 |E| 2025 FIXED 14 INIT 30 BEST 29 TREE 145 TIME(s) 0.01
+### bio-celegans pruning rate 0.96 total 3492 pruned 3346

@@ -1,0 +1,15 @@
+# Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__
+
+# EMOS executable
+src/algorithms/EMOS/emos-mds
+
+# MinimumDominatingSet and protoclust are retrieved during install
+src/algorithms/MinimumDominatingSet
+src/algorithms/protoclust
+
+.DS_Store
+.vscode/

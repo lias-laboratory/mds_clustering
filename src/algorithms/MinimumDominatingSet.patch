@@ -1,0 +1,189 @@
+diff --git a/Code/src/heuristic/Main.java b/Code/src/heuristic/Main.java
+index f0027c4..6f9f9a7 100644
+--- a/Code/src/heuristic/Main.java
++++ b/Code/src/heuristic/Main.java
+@@ -16,13 +16,14 @@ import java.util.*;
+ 
+ public class Main {
+ 
+-    final static String pathFolder = "./Instances";
+-
+     final static boolean readAllFolders = false;
+-    final static boolean readAllInstances = true;
++    final static boolean readAllInstances = false;
+ 
+-    final static String folderIndex = "LiteratureInstances";
+-    final static String instanceIndex = "astro-ph.txt";
++    final static String folderIndex = "adjacency_matrices";
++    static String instanceIndex = "temp.txt";
++    final static String homeDir = System.getProperty("user.home");
++    static String resultPath;
++    static String pathFolder;
+ 
+     static List<String> foldersNames;
+     static List<String> instancesNames;
+@@ -32,7 +33,11 @@ public class Main {
+     static GIP constructive=new GIP();
+     static LocalSearchEfficient_1_1 localSearchEfficient_1_1=new LocalSearchEfficient_1_1();
+ 
++    public static int best = Integer.MAX_VALUE;
+     public static void main(String[] args) {
++        String folderPath = args[0];
++        String resultPath = args[1];
++        setPaths(folderPath, resultPath);
+         algorithm=new IG(constructive, localSearchEfficient_1_1);
+         execute();
+     }
+@@ -40,13 +45,13 @@ public class Main {
+     private static void execute()  {
+         File file=new File(pathFolder);
+         instanceFolderPath = file.getPath() + "/";
+-        printHeaders("./results/"+algorithm.toString()+".csv");
++        printHeaders(resultPath+"/result.txt");
+         readData();
+     }
+ 
+     private static void printHeaders(String path) {
+         try (PrintWriter pw = new PrintWriter(path)) {
+-            pw.print("Instance;Time;OF");
++            pw.print("Instance;Time;OF;Solution_set");
+             pw.println();
+ 
+         } catch (IOException e) {
+@@ -64,6 +69,10 @@ public class Main {
+                 pw.print(result.get(i));
+                 if (i < nElems-1) pw.print(";");
+             }
++            pw.print(";");
++            Set<Integer> watchers=result.getSolutionSets();
++            pw.print(watchers);
++
+             pw.println();
+         } catch (IOException e) {
+             e.printStackTrace();
+@@ -72,9 +81,8 @@ public class Main {
+     private static void readData(){
+         foldersNames = Arrays.asList(new File(pathFolder).list());
+ 
+-        if(readAllFolders) readAllFolders();
+-        else if (foldersNames.contains(folderIndex)) readFolder(folderIndex);
+-        else System.out.println("Folder index exceeds the bounds of the array");
++        readFolder(pathFolder);
++        //System.out.println("Folder index exceeds the bounds of the array");
+ 
+     }
+ 
+@@ -88,7 +96,7 @@ public class Main {
+ 
+     private static void readFolder(String fileName){
+         File file;
+-        file=new File(pathFolder+"/"+fileName);
++        file=new File(pathFolder); //+"/"+fileName);
+         if(!fileName.startsWith(".") && !fileName.startsWith("..") && file.isDirectory()){
+             instancesNames = Arrays.asList(file.list());
+             instanceFolderPath = file.getPath() + "/";
+@@ -106,11 +114,15 @@ public class Main {
+     }
+ 
+     private static void readInstance(String instanceName){
+-        System.out.println(instanceName);
+         Instance instance=new Instance(instanceFolderPath +instanceName);
+         RandomManager.setSeed(13);
+         Result result= algorithm.execute(instance,false);
+-        printResults("./results/"+algorithm.toString()+".csv", result, instanceName);
++        printResults(resultPath+"/result.txt", result, instanceName);
++    }
++
++    private static void setPaths(String folderPath, String resultPath){
++        Main.resultPath = resultPath;
++        Main.pathFolder = folderPath;
+     }
+ 
+ }
+diff --git a/Code/src/heuristic/algorithm/IG.java b/Code/src/heuristic/algorithm/IG.java
+index dfe4a6b..b6e51af 100644
+--- a/Code/src/heuristic/algorithm/IG.java
++++ b/Code/src/heuristic/algorithm/IG.java
+@@ -31,8 +31,6 @@ public class IG implements IAlgorithm{
+     @Override
+     public Result execute(Instance instance, boolean draw) {
+ 
+-        System.out.println(instance.getName());
+-
+         long initialTime=System.currentTimeMillis();
+         long totalTime = System.currentTimeMillis() - initialTime;
+         float secs = totalTime / 1000f;
+@@ -60,10 +58,9 @@ public class IG implements IAlgorithm{
+ 
+         totalTime = System.currentTimeMillis() - initialTime;
+         secs = totalTime / 1000f;
+-
++        result.setSolutionSet(solution.getSelectedNodes());
+         result.add("Time", secs);
+         result.add("OF", bestOF);
+-        System.out.println(secs+"\t"+bestOF);
+         return result;
+     }
+ 
+diff --git a/Code/src/heuristic/localSearch/LocalSearchEfficient_1_1.java b/Code/src/heuristic/localSearch/LocalSearchEfficient_1_1.java
+index c788c2e..4b260cd 100644
+--- a/Code/src/heuristic/localSearch/LocalSearchEfficient_1_1.java
++++ b/Code/src/heuristic/localSearch/LocalSearchEfficient_1_1.java
+@@ -17,9 +17,9 @@ public class LocalSearchEfficient_1_1 implements ILocalSearch{
+ 
+         while(improve){
+             improve=checkImprove(sol,instance);
+-            if(sol.evaluate()<= Main.best){
+-                break;
+-            }
++            //if(sol.evaluate()<= Main.best){
++            //    break;
++            //}
+         }
+ 
+         return sol;
+diff --git a/Code/src/heuristic/structure/Instance.java b/Code/src/heuristic/structure/Instance.java
+index e287731..ffe592b 100644
+--- a/Code/src/heuristic/structure/Instance.java
++++ b/Code/src/heuristic/structure/Instance.java
+@@ -57,7 +57,6 @@ public class Instance {
+             //    count+=1;
+             //}
+             //System.out.println(count);
+-
+             for (int i = 0; i< numNodes; i++){
+                 adyacencyList[i]=new ArrayList<>(numNodes);
+                 unSelectedNodes.add(i);
+diff --git a/Code/src/heuristic/structure/Result.java b/Code/src/heuristic/structure/Result.java
+index 0fac33a..5fea646 100644
+--- a/Code/src/heuristic/structure/Result.java
++++ b/Code/src/heuristic/structure/Result.java
+@@ -2,6 +2,7 @@ package heuristic.structure;
+ 
+ import java.util.ArrayList;
+ import java.util.List;
++import java.util.Set;
+ 
+ public class Result {
+ 
+@@ -17,6 +18,7 @@ public class Result {
+ 
+     private String instanceName;
+     private List<Tuple> map=new ArrayList<>();
++    private Set<Integer> solutionSet;
+ 
+     public Result(String instanceName){
+         this.instanceName=instanceName;
+@@ -41,4 +43,12 @@ public class Result {
+     public String getInstanceName() {
+         return instanceName;
+     }
++
++    public Set<Integer> getSolutionSets() {
++        return solutionSet;
++    }
++
++    public void setSolutionSet(Set<Integer> solutionSet) {
++        this.solutionSet = solutionSet;
++    }
+ }
